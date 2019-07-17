@@ -1,0 +1,6 @@
+img_align_celeba.zip
+*.pyc
+samples/*
+models/*
+data/*
+tools/*.pyc
