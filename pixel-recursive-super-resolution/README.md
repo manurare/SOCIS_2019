@@ -1,8 +1,6 @@
 # Pixel Recursive Super Resolution
 
-TensorFlow implementation of [Pixel Recursive Super Resolution](https://arxiv.org/abs/1702.00783). This implementation contains:
-
-![model](./assets/model.png)
+Modification from the implementation of this [repository](https://github.com/nilboy/pixel-recursive-super-resolution.git)
 
 ## Requirements
 
@@ -22,25 +20,12 @@ To train model on gpu:
 	(or $ python tools/train.py --device_id=0)
 
 To train model on cpu:
+
 	$ python tools/train.py --use_gpu=False
 	
 To test images:
-	$ python test.py --use_gpu=False
 
-## Samples
+	$ python test.py
 
-Training after 30000 iteration.
-
-![sample.png](./assets/sample.png)
-
-
-## Training details
-
-cross entropy loss:
-
-![curve.png](./assets/curve.png)
-
-
-## Author
-
-nilboy / [@nilboy](https://github.com/nilboy)
+## Clarifications
+Images need to be squared of size power of 2. 
