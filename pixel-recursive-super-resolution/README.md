@@ -28,4 +28,4 @@ To test images:
 	$ python test.py
 
 ## Clarifications
-Images need to be squared of size power of 2. 
+Images need to be square of size power of 2. 
