@@ -12,16 +12,9 @@ TensorFlow implementation of [Pixel Recursive Super Resolution](https://arxiv.or
 
 
 ## Usage
-
-First, download data [celebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html)
-
-    $ mkdir data
-	$ cd data
-	$ ln -s $celebA_path celebA
-
 Then, create image_list file:
 
-	$ python tools/create_img_lists.py --dataset=data/celebA --outfile=data/train.txt
+	$ python tools/create_img_lists.py --dataset=data/train_set --outfile=data/train.txt
 
 To train model on gpu:
 
@@ -30,6 +23,9 @@ To train model on gpu:
 
 To train model on cpu:
 	$ python tools/train.py --use_gpu=False
+	
+To test images:
+	$ python test.py --use_gpu=False
 
 ## Samples
 
