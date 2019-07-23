@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="d4065b5e-37fb-425e-a64e-9dd39035d0a9" name="datacube@datacube:22" url="http:///">
+        <fileTransfer host="datacube" port="22" rootFolder="/home/datacube" accessType="SFTP" authAgent="true">
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

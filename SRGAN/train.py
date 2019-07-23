@@ -163,11 +163,17 @@ for epoch in range(1, NUM_EPOCHS + 1):
 
     # save model parameters
     if DATA_AUG:
-        torch.save(netG.state_dict(), 'epochs/netG_dataAug_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
-        torch.save(netD.state_dict(), 'epochs/netD_dataAug_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
+        out_folder = 'epochs/weights_'+str(UPSCALE_FACTOR)+'_dataAug/'
+        if not os.path.exists(out_folder):
+            os.makedirs(out_folder)
+        torch.save(netG.state_dict(), out_folder+'netG_dataAug_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
+        torch.save(netD.state_dict(), out_folder+'netD_dataAug_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
     else:
-        torch.save(netG.state_dict(), 'epochs/netG_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
-        torch.save(netD.state_dict(), 'epochs/netD_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
+        out_folder = 'epochs/weights_' + str(UPSCALE_FACTOR)+'/'
+        if not os.path.exists(out_folder):
+            os.makedirs(out_folder)
+        torch.save(netG.state_dict(), out_folder+'netG_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
+        torch.save(netD.state_dict(), out_folder+'netD_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
     # save loss\scores\psnr\ssim
     results['d_loss'].append(running_results['d_loss'] / running_results['batch_sizes'])
     results['g_loss'].append(running_results['g_loss'] / running_results['batch_sizes'])
