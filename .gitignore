@@ -5,3 +5,5 @@ LearningToCompare_FSL/*
 *.tif
 *.tiff
 *.rds
+rshiny_app/.idea/*
+script_datacube/.idea/*
