@@ -40,8 +40,8 @@ print("Band Type={}".format(gdal.GetDataTypeName(band_whales.DataType)))
 barray_whales = band_whales.ReadAsArray()
 toshow = Image.fromarray(barray_whales)
 
-rows, cols = np.where(barray_whales > 0.0)
-print("Number of whales= "+str(len(rows)))
+check = np.where(barray_whales > 0.0)
+print("Number of whales= "+str(len(check[0])))
 mask_whales = np.ma.masked_where(barray_whales <= 0.0, barray_whales)
 mask_whales = np.ma.filled(mask_whales, fill_value=0.0)
 
@@ -50,17 +50,13 @@ barray_mefts = band_mefts.ReadAsArray()
 final_band = barray_mefts * mask_whales
 
 csv_list = []
-idx = 0
-for row, col in zip(rows, cols):
-    long, lat = get_lat_long(col, row, whale_presence)
-    # print(final_band[row][col])
-    csv_list.append([final_band[row][col], long, lat])
-    idx = idx + 1
-
+for posX, posY in zip(check[0], check[1]):
+    long, lat = get_lat_long(posX, posY, whale_presence)
+    # print(final_band[posX][posY])
+    csv_list.append([final_band[posX][posY], long, lat])
 
 with open('correlation.csv', 'w', newline='') as myfile:
     wr = csv.writer(myfile)
-    wr.writerow(["value", "long", "lat"])
     wr.writerows(csv_list)
 
 
