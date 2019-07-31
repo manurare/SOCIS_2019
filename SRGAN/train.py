@@ -5,10 +5,14 @@ from math import log10
 import pandas as pd
 import torch.optim as optim
 import torch.utils.data
+import torch.nn as nn
 import torchvision.utils as utils
+from torch.optim import lr_scheduler
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from torchvision import models
+import numpy as np
 import sys
 
 import pytorch_ssim
@@ -18,9 +22,9 @@ from model import Generator, Discriminator
 
 parser = argparse.ArgumentParser(description='Train Super Resolution Models')
 parser.add_argument('--hr_size', default=256, type=int, help='training images hr size')
-parser.add_argument('--upscale_factor', default=2, type=int, choices=[2, 4, 8],
+parser.add_argument('--upscale_factor', default=2, type=int,
                     help='super resolution upscale factor')
-parser.add_argument('--batch_size', default=2, type=int, help='train batch_size number')
+parser.add_argument('--batch_size', default=1, type=int, help='train batch_size number')
 parser.add_argument('--num_epochs', default=100, type=int, help='train epoch number')
 parser.add_argument('--data_aug', default=False, action='store_true')
 
@@ -34,6 +38,7 @@ DATA_AUG = opt.data_aug
 
 print(torch.cuda.current_device())
 print(torch.cuda.get_device_name(0))
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 if DATA_AUG:
     train_set = TrainDatasetFromFolder_dataAug('/home/manuelrey/ESA/Dataset/Step2-SuperresolutionWhale/data_aug',
@@ -54,13 +59,23 @@ print('# discriminator parameters:', sum(param.numel() for param in netD.paramet
 
 generator_criterion = GeneratorLoss()
 
+classifier = models.resnet18()
+num_ftrs = classifier.fc.in_features
+classifier.fc = nn.Linear(num_ftrs, 3)
+
 if torch.cuda.is_available():
     netG.cuda()
     netD.cuda()
     generator_criterion.cuda()
+    classifier.cuda()
 
 optimizerG = optim.Adam(netG.parameters())
 optimizerD = optim.Adam(netD.parameters())
+
+####CLASSIFIER
+classifier.load_state_dict(torch.load("/home/manuelrey/ESA/pruebas/multiclass_classification/weights/best_model.pth"))
+criterion_classifier = nn.CrossEntropyLoss()
+#############
 
 results = {'d_loss': [], 'g_loss': [], 'd_score': [], 'g_score': [], 'psnr': [], 'ssim': []}
 
@@ -71,12 +86,17 @@ for epoch in range(1, NUM_EPOCHS + 1):
     netG.train()
     netD.train()
     for data, target in train_bar:
+
         # print('')
         # print([data_i.shape for data_i in data.data])
         # print([data_i.shape for data_i in target.data])
         g_update_first = True
         batch_size = data.size(0)
         running_results['batch_sizes'] += batch_size
+
+        targets_classifier = np.ones(data.shape[0], dtype=int)
+        targets_classifier = torch.from_numpy(targets_classifier)
+        targets_classifier = targets_classifier.to(device)
 
         ############################
         # (1) Update D network: maximize D(x)-1-D(G(z))
@@ -87,6 +107,8 @@ for epoch in range(1, NUM_EPOCHS + 1):
         z = Variable(data)
         if torch.cuda.is_available():
             z = z.cuda()
+        det_outputs = classifier(z)
+        loss_classifier = criterion_classifier(det_outputs, targets_classifier)
         fake_img = netG(z)
 
         netD.zero_grad()
@@ -100,13 +122,13 @@ for epoch in range(1, NUM_EPOCHS + 1):
         # (2) Update G network: minimize 1-D(G(z)) + Perception Loss + Image Loss + TV Loss
         ###########################
         netG.zero_grad()
-        g_loss = generator_criterion(fake_out, fake_img, real_img)
+        g_loss = generator_criterion(fake_out, fake_img, real_img, loss_classifier)
         g_loss.backward()
         optimizerG.step()
         fake_img = netG(z)
         fake_out = netD(fake_img).mean()
 
-        g_loss = generator_criterion(fake_out, fake_img, real_img)
+        g_loss = generator_criterion(fake_out, fake_img, real_img, loss_classifier)
         running_results['g_loss'] += g_loss.data * batch_size
         d_loss = 1 - real_out + fake_out
         running_results['d_loss'] += d_loss.data * batch_size
@@ -163,13 +185,13 @@ for epoch in range(1, NUM_EPOCHS + 1):
 
     # save model parameters
     if DATA_AUG:
-        out_folder = 'epochs/weights_'+str(UPSCALE_FACTOR)+'_dataAug/'
+        out_folder = 'epochs/weights_'+str(UPSCALE_FACTOR)+'_dataAug_wholePipe/'
         if not os.path.exists(out_folder):
             os.makedirs(out_folder)
         torch.save(netG.state_dict(), out_folder+'netG_dataAug_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
         torch.save(netD.state_dict(), out_folder+'netD_dataAug_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
     else:
-        out_folder = 'epochs/weights_' + str(UPSCALE_FACTOR)+'/'
+        out_folder = 'epochs/weights_' + str(UPSCALE_FACTOR)+'_wholePipe/'
         if not os.path.exists(out_folder):
             os.makedirs(out_folder)
         torch.save(netG.state_dict(), out_folder+'netG_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
