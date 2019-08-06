@@ -1,7 +1,9 @@
 from os import listdir
 from os.path import join
+import os
 
 from PIL import Image
+from torchvision import datasets
 from torch.utils.data.dataset import Dataset
 from torchvision.transforms import Compose, RandomCrop, ToTensor, ToPILImage, CenterCrop, Resize
 
@@ -132,6 +134,7 @@ class TrainDatasetFromFolder_dataAug(Dataset):
     def __len__(self):
         return len(self.image_filenames)
 
+
 class TrainDatasetFromFolder(Dataset):
     def __init__(self, dataset_dir, hr_size, upscale_factor):
         super(TrainDatasetFromFolder, self).__init__()
@@ -170,29 +173,6 @@ class ValDatasetFromFolder(Dataset):
         return len(self.image_filenames)
 
 
-# class TestDatasetFromFolder(Dataset):
-#     def __init__(self, dataset_dir, hr_size, upscale_factor):
-#         super(TestDatasetFromFolder, self).__init__()
-#         # self.lr_path = dataset_dir + '/SRF_' + str(upscale_factor) + '/data/'
-#         # self.hr_path = dataset_dir + '/SRF_' + str(upscale_factor) + '/target/'
-#         self.path = dataset_dir
-#         self.hr_size = hr_size
-#         self.upscale_factor = upscale_factor
-#         self.hr_transform = train_hr_transform(hr_size)
-#         self.lr_transform = train_lr_transform(hr_size, upscale_factor)
-#         self.filenames = [join(self.path, x) for x in listdir(self.path) if is_image_file(x)]
-#
-#     def __getitem__(self, index):
-#         image_name = self.filenames[index].split('/')[-1]
-#         hr_image = self.hr_transform(Image.open(self.filenames[index]))
-#         lr_image = self.lr_transform(hr_image)
-#         hr_scale = Resize(size=(self.hr_size,self.hr_size), interpolation=Image.BICUBIC)
-#         lr_resized2hr = hr_scale(ToPILImage()(lr_image))
-#         return image_name, lr_image, ToTensor()(lr_resized2hr), hr_image
-#
-#     def __len__(self):
-#         return len(self.filenames)
-
 class TestDatasetFromFolder(Dataset):
     def __init__(self, dataset_dir, upscale_factor):
         super(TestDatasetFromFolder, self).__init__()
@@ -200,7 +180,7 @@ class TestDatasetFromFolder(Dataset):
         self.filenames = [join(dataset_dir, x) for x in listdir(dataset_dir) if is_image_file(x)]
 
     def __getitem__(self, index):
-        image_name = self.filenames[index].split('/')[-1]
+        image_name = self.filenames[index]
         lr_image = Image.open(self.filenames[index])
         w, h = lr_image.size
         hr_scale = Resize((self.upscale_factor * h, self.upscale_factor * w), interpolation=Image.BICUBIC)
@@ -209,3 +189,77 @@ class TestDatasetFromFolder(Dataset):
 
     def __len__(self):
         return len(self.filenames)
+
+
+
+
+######FOR GENERATING SPLIT DATASETS
+
+class ImageFolderWithPaths(datasets.ImageFolder):
+    """Custom dataset that includes image paths. Extends
+    torchvision.datasets.ImageFolder
+    """
+
+    # override the __getitem__ method that dataloader calls
+    def __getitem__(self, index):
+        original_tuple = super(ImageFolderWithPaths, self).__getitem__(index)
+        name = str(self.imgs[index][0].split('/')[-1])
+        path = self.imgs[index][0].split('/')[-3]+os.sep+self.imgs[index][0].split('/')[-2]
+        tuple_with_name = (original_tuple + (name,)+(path,))
+        return tuple_with_name
+
+#######FOR TRAINING WITH TRAIN,VAL,TEST LAYOUT
+class ImageFolderWithPaths_train(datasets.ImageFolder):
+    """Custom dataset that includes image paths. Extends
+    torchvision.datasets.ImageFolder
+    """
+
+    def __init__(self, data_dir, hr_size, upscale_factor):
+        super(ImageFolderWithPaths_train, self).__init__(data_dir)
+        self.hr_transform = train_hr_transform(hr_size)
+        self.lr_transform = train_lr_transform(hr_size, upscale_factor)
+
+    # override the __getitem__ method that dataloader calls
+    def __getitem__(self, index):
+        original_tuple = super(ImageFolderWithPaths_train, self).__getitem__(index)
+        hr_image = self.hr_transform(original_tuple[0])
+        lr_image = self.lr_transform(hr_image)
+        return lr_image, hr_image, original_tuple[1]
+
+
+class ImageFolderWithPaths_val(datasets.ImageFolder):
+    """Custom dataset that includes image paths. Extends
+    torchvision.datasets.ImageFolder
+    """
+    def __init__(self, data_dir, hr_size, upscale_factor):
+        super(ImageFolderWithPaths_val, self).__init__(data_dir)
+        self.upscale_factor = upscale_factor
+        self.hr_size = hr_size
+
+    # override the __getitem__ method that dataloader calls
+    def __getitem__(self, index):
+        original_tuple = super(ImageFolderWithPaths_val, self).__getitem__(index)
+        hr_image = original_tuple[0]
+        lr_scale = Resize(size=(self.hr_size // self.upscale_factor, self.hr_size // self.upscale_factor)
+                          , interpolation=Image.BICUBIC)
+        hr_scale = Resize(size=(self.hr_size,self.hr_size), interpolation=Image.BICUBIC)
+        hr_image = hr_scale(hr_image)
+        lr_image = lr_scale(hr_image)
+        hr_restore_img = hr_scale(lr_image)
+        return ToTensor()(lr_image), ToTensor()(hr_restore_img), ToTensor()(hr_image)
+
+# class ImageFolderWithPaths_test(datasets.ImageFolder):
+#     """Custom dataset that includes image paths. Extends
+#     torchvision.datasets.ImageFolder
+#     """
+#     def __init__(self, data_dir, upscale_factor):
+#         super(ImageFolderWithPaths_test, self).__init__(data_dir)
+#         self.upscale_factor = upscale_factor
+#
+#     # override the __getitem__ method that dataloader calls
+#     def __getitem__(self, index):
+#         original_tuple = super(ImageFolderWithPaths_test, self).__getitem__(index)
+#         w, h = lr_image.size
+#         hr_scale = Resize((self.upscale_factor * h, self.upscale_factor * w), interpolation=Image.BICUBIC)
+#         lr_in_hr_scale = hr_scale(lr_image)
+#         return image_name, ToTensor()(lr_image), ToTensor()(lr_in_hr_scale)
