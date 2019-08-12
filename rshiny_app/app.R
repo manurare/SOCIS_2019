@@ -6,9 +6,6 @@ library(shiny)
 library(shinydashboard)
 library(leaflet)
 
-
-df <- readRDS("./correlation.rds")
-
 ui <- dashboardPage(
 dashboardHeader(),
 dashboardSidebar(),
@@ -23,6 +20,7 @@ leafletOutput("map")
 # )
 
 server <- function(input, output) {
+    df <- readRDS("./correlation.rds")
     data <- reactive({
         x <- df
     })
