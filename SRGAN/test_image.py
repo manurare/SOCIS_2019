@@ -24,7 +24,7 @@ parser.add_argument('--upscale_factor', default=2, type=int, help='super resolut
 parser.add_argument('--test_mode', default='GPU', type=str, choices=['GPU', 'CPU'], help='using GPU or CPU')
 parser.add_argument('--image_name', type=str, help='test low resolution image name')
 parser.add_argument('--test_set_dir', type=str, help='test set directory')
-# parser.add_argument('--model_name', default='netG_dataAug_epoch_2_98.pth', type=str, help='generator model epoch name')
+parser.add_argument('--whole_pipe', default=False, action='store_true')
 parser.add_argument('--model_name', default='netG_epoch_2_100.pth', type=str, help='generator model epoch name')
 opt = parser.parse_args()
 
@@ -37,18 +37,32 @@ TEST_MODE = True if opt.test_mode == 'GPU' else False
 IMAGE_NAME = opt.image_name
 MODEL_NAME = opt.model_name
 TEST_DIR = opt.test_set_dir
+WHOLE_PIPE = opt.whole_pipe
 
 print(torch.cuda.current_device())
 print(torch.cuda.get_device_name(0))
 model = Generator(UPSCALE_FACTOR).eval()
 if TEST_MODE:
     model.cuda()
-    model.load_state_dict(torch.load('epochs/' + MODEL_NAME))
+    if WHOLE_PIPE:
+        model.load_state_dict(torch.load('epochs/weights_2_wholePipe/' + MODEL_NAME))
+    else:
+        model.load_state_dict(torch.load('epochs/weights_halfPipe/weights_'+str(UPSCALE_FACTOR)+"_dataAug/"
+                                         + MODEL_NAME))
 else:
-    model.load_state_dict(torch.load('epochs/' + MODEL_NAME, map_location=lambda storage, loc: storage))
+    if WHOLE_PIPE:
+        model.load_state_dict(torch.load('epochs/weights_2_wholePipe/' + MODEL_NAME
+                                         , map_location=lambda storage, loc: storage))
+    else:
+        model.load_state_dict(torch.load('epochs/weights_halfPipe/weights_'+str(UPSCALE_FACTOR)+"_dataAug/"
+                                         + MODEL_NAME, map_location=lambda storage, loc: storage))
+
 
 if TEST_DIR is not None and IMAGE_NAME is None:
-    out_folder = "tested_images/"
+    if WHOLE_PIPE:
+        out_folder = 'tested_images_whole_pipe_'+str(UPSCALE_FACTOR)+os.sep
+    else:
+        out_folder = 'tested_images_'+str(UPSCALE_FACTOR)+os.sep
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
     test_set = TestDatasetFromFolder(TEST_DIR, upscale_factor=UPSCALE_FACTOR)
@@ -68,7 +82,7 @@ if TEST_DIR is not None and IMAGE_NAME is None:
         test_images = torch.chunk(test_images, test_images.size(0) // 2)
         index = 1
         for image in test_images:
-            out_path = out_folder+image_name[0].split(".")[0]+".jpg"
+            out_path = out_folder+image_name[0].split(".")[0].split("/")[-1]+".jpg"
             image = utils.make_grid(image, nrow=3, padding=5)
             utils.save_image(image, out_path, padding=5)
             index += 1

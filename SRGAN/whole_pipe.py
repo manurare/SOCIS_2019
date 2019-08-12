@@ -19,38 +19,33 @@ import sys
 from model import Generator
 
 parser = argparse.ArgumentParser(description='Train Super Resolution Models')
-parser.add_argument('--hr_size', default=322, type=int, help='training images hr size')
-parser.add_argument('--upscale_factor', default=2, type=int,
-                    help='super resolution upscale factor')
-parser.add_argument('--batch_size', default=1, type=int, help='train batch_size number')
-parser.add_argument('--num_epochs', default=100, type=int, help='train epoch number')
+parser.add_argument('--upscale_factor', default=4, type=int, help='super resolution upscale factor')
 parser.add_argument('--generate_dataset', default=False, action='store_true')
-parser.add_argument('--model_name', default='netG_dataAug_epoch_2_100.pth', type=str, help='generator model epoch name')
-# parser.add_argument('--data_aug', default=False, action='store_true')
+# parser.add_argument('--model_name', default='netG_dataAug_epoch_2_100.pth', type=str, help='generator model epoch name')
+parser.add_argument('--model_name', default='netG_epoch_2_100.pth', type=str, help='generator model epoch name')
+parser.add_argument('--whole_pipe', default=False, action='store_true')
 
 opt = parser.parse_args()
 
-HR_SIZE = opt.hr_size
 UPSCALE_FACTOR = opt.upscale_factor
-NUM_EPOCHS = opt.num_epochs
 MODEL_NAME = opt.model_name
-BATCH_SIZE = opt.batch_size
 GEN_DATASET = opt.generate_dataset
+WHOLE_PIPE = opt.whole_pipe
 
 data_transforms = {
     'train': transforms.Compose([
-        transforms.Resize(size=(HR_SIZE // UPSCALE_FACTOR, HR_SIZE // UPSCALE_FACTOR)),
+        transforms.Resize(size=(161, 161)),
         # transforms.RandomHorizontalFlip(),
         transforms.ToTensor()
         # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'val': transforms.Compose([
-        transforms.Resize(size=(HR_SIZE // UPSCALE_FACTOR, HR_SIZE // UPSCALE_FACTOR)),
+        transforms.Resize(size=(161, 161)),
         transforms.ToTensor()
         # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'test': transforms.Compose([
-        transforms.Resize(size=(HR_SIZE // UPSCALE_FACTOR, HR_SIZE // UPSCALE_FACTOR)),
+        transforms.Resize(size=(161, 161)),
         transforms.ToTensor()
         # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
@@ -69,13 +64,19 @@ if GEN_DATASET:
     class_names = image_datasets['train'].classes
 
     netG = Generator(UPSCALE_FACTOR)
-    netG.load_state_dict(torch.load('epochs/weights_noDet/weights_'+str(UPSCALE_FACTOR)+'_dataAug/' + MODEL_NAME))
+    if WHOLE_PIPE:
+        netG.load_state_dict(torch.load('epochs/weights_'+str(UPSCALE_FACTOR)+'_wholePipe/' + MODEL_NAME))
+    else:
+        netG.load_state_dict(torch.load('epochs/weights_noDet/weights_'+str(UPSCALE_FACTOR)+'_dataAug/' + MODEL_NAME))
     if torch.cuda.is_available():
         netG.to(device)
     netG.eval()
 
     for name_dataloader in dataloaders:
-        path = '/home/manuelrey/ESA/Dataset/split_dataset_'+str(UPSCALE_FACTOR)+os.sep
+        if WHOLE_PIPE:
+            path = '/home/manuelrey/ESA/Dataset/split_dataset_wholePipe_'+str(UPSCALE_FACTOR)+os.sep
+        else:
+            path = '/home/manuelrey/ESA/Dataset/split_dataset_SRGAN_'+str(UPSCALE_FACTOR)+os.sep
         # if not os.path.exists(path):
         #     os.makedirs(path)
         for lr_image, label, tuple_name, tuple_folder in dataloaders[name_dataloader]:

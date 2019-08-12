@@ -91,7 +91,7 @@ def is_image_file(filename):
 
 def train_hr_transform(hr_size):
     return Compose([
-        Resize(size=(hr_size, hr_size),interpolation=Image.BICUBIC),
+        Resize(size=(hr_size, hr_size), interpolation=Image.BICUBIC),
         ToTensor(),
     ])
 
@@ -214,39 +214,62 @@ class ImageFolderWithPaths_train(datasets.ImageFolder):
     torchvision.datasets.ImageFolder
     """
 
-    def __init__(self, data_dir, hr_size, upscale_factor):
-        super(ImageFolderWithPaths_train, self).__init__(data_dir)
+    def __init__(self, data_dir_hr, data_dir_lr,  hr_size, upscale_factor):
+        super(ImageFolderWithPaths_train, self).__init__(data_dir_hr)
         self.hr_transform = train_hr_transform(hr_size)
         self.lr_transform = train_lr_transform(hr_size, upscale_factor)
+        self.data_dir_lr = data_dir_lr
 
     # override the __getitem__ method that dataloader calls
     def __getitem__(self, index):
         original_tuple = super(ImageFolderWithPaths_train, self).__getitem__(index)
+        path = self.data_dir_lr+os.sep+self.imgs[index][0].split('/')[-2]+os.sep+self.imgs[index][0].split('/')[-1]
+        lr_image = ToTensor()(Image.open(path))
         hr_image = self.hr_transform(original_tuple[0])
-        lr_image = self.lr_transform(hr_image)
+        lr_image = self.lr_transform(lr_image)
         return lr_image, hr_image, original_tuple[1]
+
+    # def __getitem__(self, index):
+    #     original_tuple = super(ImageFolderWithPaths_train, self).__getitem__(index)
+    #     hr_image = self.hr_transform(original_tuple[0])
+    #     lr_image = self.lr_transform(hr_image)
+    #     return lr_image, hr_image, original_tuple[1]
 
 
 class ImageFolderWithPaths_val(datasets.ImageFolder):
     """Custom dataset that includes image paths. Extends
     torchvision.datasets.ImageFolder
     """
-    def __init__(self, data_dir, hr_size, upscale_factor):
-        super(ImageFolderWithPaths_val, self).__init__(data_dir)
+    def __init__(self, data_dir_hr, data_dir_lr, hr_size, upscale_factor):
+        super(ImageFolderWithPaths_val, self).__init__(data_dir_hr)
         self.upscale_factor = upscale_factor
         self.hr_size = hr_size
+        self.data_dir_lr = data_dir_lr
 
     # override the __getitem__ method that dataloader calls
     def __getitem__(self, index):
         original_tuple = super(ImageFolderWithPaths_val, self).__getitem__(index)
         hr_image = original_tuple[0]
+        path = self.data_dir_lr+os.sep+self.imgs[index][0].split('/')[-2]+os.sep+self.imgs[index][0].split('/')[-1]
+        lr_image = Image.open(path)
         lr_scale = Resize(size=(self.hr_size // self.upscale_factor, self.hr_size // self.upscale_factor)
                           , interpolation=Image.BICUBIC)
-        hr_scale = Resize(size=(self.hr_size,self.hr_size), interpolation=Image.BICUBIC)
+        hr_scale = Resize(size=(self.hr_size, self.hr_size), interpolation=Image.BICUBIC)
         hr_image = hr_scale(hr_image)
-        lr_image = lr_scale(hr_image)
+        lr_image = lr_scale(lr_image)
         hr_restore_img = hr_scale(lr_image)
         return ToTensor()(lr_image), ToTensor()(hr_restore_img), ToTensor()(hr_image)
+
+    # def __getitem__(self, index):
+    #     original_tuple = super(ImageFolderWithPaths_val, self).__getitem__(index)
+    #     hr_image = original_tuple[0]
+    #     lr_scale = Resize(size=(self.hr_size // self.upscale_factor, self.hr_size // self.upscale_factor)
+    #                       , interpolation=Image.BICUBIC)
+    #     hr_scale = Resize(size=(self.hr_size,self.hr_size), interpolation=Image.BICUBIC)
+    #     hr_image = hr_scale(hr_image)
+    #     lr_image = lr_scale(hr_image)
+    #     hr_restore_img = hr_scale(lr_image)
+    #     return ToTensor()(lr_image), ToTensor()(hr_restore_img), ToTensor()(hr_image)
 
 # class ImageFolderWithPaths_test(datasets.ImageFolder):
 #     """Custom dataset that includes image paths. Extends

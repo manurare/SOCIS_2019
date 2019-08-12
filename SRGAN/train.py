@@ -26,7 +26,6 @@ parser.add_argument('--upscale_factor', default=2, type=int,
 parser.add_argument('--batch_size', default=1, type=int, help='train batch_size number')
 parser.add_argument('--num_epochs', default=100, type=int, help='train epoch number')
 parser.add_argument('--data_aug', default=False, action='store_true')
-parser.add_argument('--whole_pipe', default=False, action='store_true')
 
 opt = parser.parse_args()
 
@@ -35,7 +34,6 @@ UPSCALE_FACTOR = opt.upscale_factor
 NUM_EPOCHS = opt.num_epochs
 BATCH_SIZE = opt.batch_size
 DATA_AUG = opt.data_aug
-WHOLE_PIPE = opt.whole_pipe
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(torch.cuda.get_device_name(device.index))
@@ -61,23 +59,13 @@ def train_half_pipe():
 
     generator_criterion = GeneratorLoss()
 
-    classifier = models.resnet18()
-    num_ftrs = classifier.fc.in_features
-    classifier.fc = nn.Linear(num_ftrs, 7)
-
     if torch.cuda.is_available():
         netG.cuda()
         netD.cuda()
         generator_criterion.cuda()
-        classifier.cuda()
 
     optimizerG = optim.Adam(netG.parameters())
     optimizerD = optim.Adam(netD.parameters())
-
-    ####CLASSIFIER
-    classifier.load_state_dict(torch.load("/home/manuelrey/ESA/pruebas/multiclass_classification/weights/best_model.pth"))
-    criterion_classifier = nn.CrossEntropyLoss()
-    #############
 
     results = {'d_loss': [], 'g_loss': [], 'd_score': [], 'g_score': [], 'psnr': [], 'ssim': []}
 
@@ -96,10 +84,6 @@ def train_half_pipe():
             batch_size = data.size(0)
             running_results['batch_sizes'] += batch_size
 
-            targets_classifier = np.ones(data.shape[0], dtype=int)
-            targets_classifier = torch.from_numpy(targets_classifier)
-            targets_classifier = targets_classifier.to(device)
-
             ############################
             # (1) Update D network: maximize D(x)-1-D(G(z))
             ###########################
@@ -110,10 +94,6 @@ def train_half_pipe():
             if torch.cuda.is_available():
                 z = z.cuda()
             fake_img = netG(z)
-
-            det_outputs = classifier(z)
-            loss_classifier = criterion_classifier(det_outputs, targets_classifier)
-            loss_classifier = 0.0
 
             netD.zero_grad()
             real_out = netD(real_img).mean()
@@ -126,13 +106,13 @@ def train_half_pipe():
             # (2) Update G network: minimize 1-D(G(z)) + Perception Loss + Image Loss + TV Loss
             ###########################
             netG.zero_grad()
-            g_loss = generator_criterion(fake_out, fake_img, real_img, loss_classifier)
+            g_loss = generator_criterion(fake_out, fake_img, real_img, 0)
             g_loss.backward()
             optimizerG.step()
             fake_img = netG(z)
             fake_out = netD(fake_img).mean()
 
-            g_loss = generator_criterion(fake_out, fake_img, real_img, loss_classifier)
+            g_loss = generator_criterion(fake_out, fake_img, real_img, 0)
             running_results['g_loss'] += g_loss.data * batch_size
             d_loss = 1 - real_out + fake_out
             running_results['d_loss'] += d_loss.data * batch_size
@@ -211,6 +191,8 @@ def train_half_pipe():
 
         if epoch % 10 == 0 and epoch != 0:
             out_path = 'statistics_halfPipe/'
+            if not os.path.exists(out_path):
+                os.makedirs(out_path)
             data_frame = pd.DataFrame(
                 data={'Loss_D': results['d_loss'], 'Loss_G': results['g_loss'], 'Score_D': results['d_score'],
                       'Score_G': results['g_score'], 'PSNR': results['psnr'], 'SSIM': results['ssim']},
@@ -222,9 +204,10 @@ def train_half_pipe():
 
 
 def train_whole_pipe():
-    data_dir = '/home/manuelrey/ESA/Dataset/split_dataset_'+str(UPSCALE_FACTOR)+os.sep
-    train_set = ImageFolderWithPaths_train(data_dir+"train"+os.sep, HR_SIZE, UPSCALE_FACTOR)
-    val_set = ImageFolderWithPaths_val(data_dir+"val"+os.sep, HR_SIZE, UPSCALE_FACTOR)
+    data_dir_lr = '/home/manuelrey/ESA/Dataset/split_dataset/'
+    data_dir_hr = '/home/manuelrey/ESA/Dataset/split_dataset_SRGAN_'+str(UPSCALE_FACTOR)+os.sep
+    train_set = ImageFolderWithPaths_train(data_dir_hr+"train"+os.sep, data_dir_lr+"train", HR_SIZE, UPSCALE_FACTOR)
+    val_set = ImageFolderWithPaths_val(data_dir_hr+"val"+os.sep, data_dir_lr+"val", HR_SIZE, UPSCALE_FACTOR)
 
     train_loader = DataLoader(dataset=train_set, batch_size=1, shuffle=True, num_workers=4)
     val_loader = DataLoader(dataset=val_set, num_workers=4, batch_size=1, shuffle=False)
@@ -256,11 +239,12 @@ def train_whole_pipe():
     num_ftrs = classifier.fc.in_features
     classifier.fc = nn.Linear(num_ftrs, len(class_names))
     classifier.to(device)
-    if UPSCALE_FACTOR == 1:
-        weights_class_path = "/home/manuelrey/ESA/pruebas/multiclass_classification/weights/best_model.pth"
-    else:
-        weights_class_path = "/home/manuelrey/ESA/pruebas/multiclass_classification/weights/best_model_"\
-                             + str(UPSCALE_FACTOR)+".pth"
+    # if UPSCALE_FACTOR == 1:
+    #     weights_class_path = "/home/manuelrey/ESA/pruebas/multiclass_classification/weights/best_model.pth"
+    # else:
+    #     weights_class_path = "/home/manuelrey/ESA/pruebas/multiclass_classification/weights/best_model_SRGAN_"\
+    #                          + str(UPSCALE_FACTOR)+".pth"
+    weights_class_path = "/home/manuelrey/ESA/pruebas/multiclass_classification/weights/best_model.pth"
     classifier.load_state_dict(torch.load(weights_class_path))
     criterion_classifier = nn.CrossEntropyLoss()
     classifier.eval()
@@ -295,9 +279,10 @@ def train_whole_pipe():
                 z = z.cuda()
             fake_img = netG(z)
 
-            classifier_outputs = classifier(real_img)
+            classifier_outputs = classifier(z)
             _, preds = torch.max(classifier_outputs, 1)
-            print(str(preds)+"--"+str(label))
+            if preds != label:
+                print(str(preds)+"--"+str(label))
             loss_classifier = criterion_classifier(classifier_outputs, label)
 
             netD.zero_grad()
@@ -395,7 +380,9 @@ def train_whole_pipe():
         results['ssim'].append(valing_results['ssim'])
 
         if epoch % 10 == 0 and epoch != 0:
-            out_path = 'statistics/'
+            out_path = 'statistics_wholePipe/'
+            if not os.path.exists(out_path):
+                os.makedirs(out_path)
             data_frame = pd.DataFrame(
                 data={'Loss_D': results['d_loss'], 'Loss_G': results['g_loss'], 'Score_D': results['d_score'],
                       'Score_G': results['g_score'], 'PSNR': results['psnr'], 'SSIM': results['ssim']},
@@ -407,4 +394,4 @@ def train_whole_pipe():
 
 
 if __name__ == "__main__":
-    train_whole_pipe()
+    train_half_pipe()
