@@ -14,6 +14,7 @@ from tqdm import tqdm
 from torchvision import models, transforms
 import numpy as np
 import sys
+import copy
 import pytorch_ssim
 from data_utils import *
 from loss import GeneratorLoss
@@ -24,8 +25,9 @@ parser.add_argument('--hr_size', default=322, type=int, help='training images hr
 parser.add_argument('--upscale_factor', default=2, type=int,
                     help='super resolution upscale factor')
 parser.add_argument('--batch_size', default=1, type=int, help='train batch_size number')
-parser.add_argument('--num_epochs', default=100, type=int, help='train epoch number')
+parser.add_argument('--num_epochs', default=50, type=int, help='train epoch number')
 parser.add_argument('--data_aug', default=False, action='store_true')
+parser.add_argument('--whole_pipe', default=False, action='store_true')
 
 opt = parser.parse_args()
 
@@ -34,6 +36,7 @@ UPSCALE_FACTOR = opt.upscale_factor
 NUM_EPOCHS = opt.num_epochs
 BATCH_SIZE = opt.batch_size
 DATA_AUG = opt.data_aug
+WHOLE_PIPE = opt.whole_pipe
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(torch.cuda.get_device_name(device.index))
@@ -41,13 +44,12 @@ print(torch.cuda.get_device_name(device.index))
 
 def train_half_pipe():
     if DATA_AUG:
-        train_set = TrainDatasetFromFolder_dataAug('/home/manuelrey/ESA/Dataset/Step2-SuperresolutionWhale/data_aug',
-                                                   '/home/manuelrey/ESA/Dataset/Step2-SuperresolutionWhale/converted_jpg',
-                                           hr_size=HR_SIZE, upscale_factor=UPSCALE_FACTOR)
+        train_set = TrainDatasetFromFolder('/home/manuelrey/ESA/Dataset/Step2-SuperresolutionWhale/split_SRdataset/train'
+                                           ,hr_size=HR_SIZE, upscale_factor=UPSCALE_FACTOR)
     else:
         train_set = TrainDatasetFromFolder('/home/manuelrey/ESA/Dataset/Step2-SuperresolutionWhale/converted_jpg',
                                            hr_size=HR_SIZE, upscale_factor=UPSCALE_FACTOR)
-    val_set = ValDatasetFromFolder('/home/manuelrey/ESA/Dataset/Step2-SuperresolutionWhale/converted_jpg',
+    val_set = ValDatasetFromFolder('/home/manuelrey/ESA/Dataset/Step2-SuperresolutionWhale/split_SRdataset/test',
                                    hr_size=HR_SIZE, upscale_factor=UPSCALE_FACTOR)
     train_loader = DataLoader(dataset=train_set, num_workers=4, batch_size=BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(dataset=val_set, num_workers=4, batch_size=1, shuffle=False)
@@ -66,6 +68,11 @@ def train_half_pipe():
 
     optimizerG = optim.Adam(netG.parameters())
     optimizerD = optim.Adam(netD.parameters())
+
+    best_netG = copy.deepcopy(netG.state_dict())
+    best_netD = copy.deepcopy(netD.state_dict())
+    old_PSNR = 0.0
+    old_SSIM = 0.0
 
     results = {'d_loss': [], 'g_loss': [], 'd_score': [], 'g_score': [], 'psnr': [], 'ssim': []}
 
@@ -167,7 +174,18 @@ def train_half_pipe():
         #         utils.save_image(image, out_path + 'epoch_%d_index_%d.png' % (epoch, index), padding=5)
         #     index += 1
 
-        # save model parameters
+        # SAVE model parameters
+        if valing_results['psnr'] > old_PSNR and valing_results['ssim'] > old_SSIM:
+            old_PSNR = valing_results['psnr']
+            old_SSIM = valing_results['ssim']
+            best_netG = copy.deepcopy(netG.state_dict())
+            best_netD = copy.deepcopy(netD.state_dict())
+            out_folder = 'epochs/weights_'+str(UPSCALE_FACTOR)+'_dataAug_halfPipe/'
+            if not os.path.exists(out_folder):
+                os.makedirs(out_folder)
+            torch.save(best_netG, out_folder + 'best_netG.pth')
+            torch.save(best_netD, out_folder + 'best_netD.pth')
+
         if epoch % 10 == 0 and epoch != 0:
             if DATA_AUG:
                 out_folder = 'epochs/weights_'+str(UPSCALE_FACTOR)+'_dataAug_halfPipe/'
@@ -207,7 +225,7 @@ def train_whole_pipe():
     data_dir_lr = '/home/manuelrey/ESA/Dataset/split_dataset/'
     data_dir_hr = '/home/manuelrey/ESA/Dataset/split_dataset_SRGAN_'+str(UPSCALE_FACTOR)+os.sep
     train_set = ImageFolderWithPaths_train(data_dir_hr+"train"+os.sep, data_dir_lr+"train", HR_SIZE, UPSCALE_FACTOR)
-    val_set = ImageFolderWithPaths_val(data_dir_hr+"val"+os.sep, data_dir_lr+"val", HR_SIZE, UPSCALE_FACTOR)
+    val_set = ImageFolderWithPaths_val(data_dir_hr+"test"+os.sep, data_dir_lr+"test", HR_SIZE, UPSCALE_FACTOR)
 
     train_loader = DataLoader(dataset=train_set, batch_size=1, shuffle=True, num_workers=4)
     val_loader = DataLoader(dataset=val_set, num_workers=4, batch_size=1, shuffle=False)
@@ -215,10 +233,13 @@ def train_whole_pipe():
     print(train_set.classes)
     print(val_set.classes)
 
-    netD_weights = "epochs/weights_halfPipe/weights_"+str(UPSCALE_FACTOR)\
-                   + "_dataAug/netD_dataAug_epoch_"+str(UPSCALE_FACTOR)+"_100.pth"
-    netG_weights = "epochs/weights_halfPipe/weights_" + str(UPSCALE_FACTOR) \
-                   + "_dataAug/netG_dataAug_epoch_" + str(UPSCALE_FACTOR) + "_100.pth"
+    # netD_weights = "epochs/weights_halfPipe/weights_"+str(UPSCALE_FACTOR)\
+    #                + "_dataAug/netD_dataAug_epoch_"+str(UPSCALE_FACTOR)+"_080.pth"
+    # netG_weights = "epochs/weights_halfPipe/weights_" + str(UPSCALE_FACTOR) \
+    #                + "_dataAug/netG_dataAug_epoch_" + str(UPSCALE_FACTOR) + "_080.pth"
+    netD_weights = "epochs/weights_halfPipe/weights_" + str(UPSCALE_FACTOR) + "_dataAug/best_netD.pth"
+    netG_weights = "epochs/weights_halfPipe/weights_" + str(UPSCALE_FACTOR) + "_dataAug/best_netG.pth"
+
     netG = Generator(UPSCALE_FACTOR)
     netG.load_state_dict(torch.load(netG_weights))
     netD = Discriminator()
@@ -235,20 +256,30 @@ def train_whole_pipe():
     optimizerD = optim.Adam(netD.parameters())
 
     ####CLASSIFIER
-    classifier = models.resnet18()
+    classifier = models.resnet18(pretrained=True)
     num_ftrs = classifier.fc.in_features
     classifier.fc = nn.Linear(num_ftrs, len(class_names))
+    classifier.name = 'resnet18'
     classifier.to(device)
     # if UPSCALE_FACTOR == 1:
     #     weights_class_path = "/home/manuelrey/ESA/pruebas/multiclass_classification/weights/best_model.pth"
     # else:
     #     weights_class_path = "/home/manuelrey/ESA/pruebas/multiclass_classification/weights/best_model_SRGAN_"\
     #                          + str(UPSCALE_FACTOR)+".pth"
-    weights_class_path = "/home/manuelrey/ESA/pruebas/multiclass_classification/weights/best_model.pth"
+    weights_class_path = "/home/manuelrey/ESA/pruebas/multiclass_classification/weights/"+\
+                         classifier.name+"_best_model_kfold.pth"
     classifier.load_state_dict(torch.load(weights_class_path))
     criterion_classifier = nn.CrossEntropyLoss()
     classifier.eval()
+    print(classifier.name)
+    print("upscale factor %d" % UPSCALE_FACTOR)
+    print("HR size %d" % HR_SIZE)
     #############
+
+    best_netG = copy.deepcopy(netG.state_dict())
+    best_netD = copy.deepcopy(netD.state_dict())
+    old_PSNR = 0
+    old_SSIM = 0
 
     results = {'d_loss': [], 'g_loss': [], 'd_score': [], 'g_score': [], 'psnr': [], 'ssim': []}
 
@@ -357,20 +388,24 @@ def train_whole_pipe():
         #         utils.save_image(image, out_path + 'epoch_%d_index_%d.png' % (epoch, index), padding=5)
         #     index += 1
 
-        # save model parameters
+        # SAVE model parameters
+        if valing_results['psnr'] > old_PSNR and valing_results['ssim'] > old_SSIM:
+            old_PSNR = valing_results['psnr']
+            old_SSIM = valing_results['ssim']
+            best_netG = copy.deepcopy(netG.state_dict())
+            best_netD = copy.deepcopy(netD.state_dict())
+            out_folder = 'epochs/weights_' + str(UPSCALE_FACTOR) + '_' + str(classifier.name) + '_wholePipe/'
+            if not os.path.exists(out_folder):
+                os.makedirs(out_folder)
+            torch.save(best_netG, out_folder + 'best_netG.pth')
+            torch.save(best_netD, out_folder + 'best_netD.pth')
+
         if epoch % 10 == 0 and epoch != 0:
-            if DATA_AUG:
-                out_folder = 'epochs/weights_'+str(UPSCALE_FACTOR)+'_dataAug_wholePipe/'
-                if not os.path.exists(out_folder):
-                    os.makedirs(out_folder)
-                torch.save(netG.state_dict(), out_folder+'netG_dataAug_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
-                torch.save(netD.state_dict(), out_folder+'netD_dataAug_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
-            else:
-                out_folder = 'epochs/weights_' + str(UPSCALE_FACTOR)+'_wholePipe/'
-                if not os.path.exists(out_folder):
-                    os.makedirs(out_folder)
-                torch.save(netG.state_dict(), out_folder+'netG_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
-                torch.save(netD.state_dict(), out_folder+'netD_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
+            out_folder = 'epochs/weights_' + str(UPSCALE_FACTOR)+'_'+str(classifier.name)+'_wholePipe/'
+            if not os.path.exists(out_folder):
+                os.makedirs(out_folder)
+            torch.save(netG.state_dict(), out_folder+'netG_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
+            torch.save(netD.state_dict(), out_folder+'netD_epoch_%d_%03d.pth' % (UPSCALE_FACTOR, epoch))
         # save loss\scores\psnr\ssim
         results['d_loss'].append(running_results['d_loss'] / running_results['batch_sizes'])
         results['g_loss'].append(running_results['g_loss'] / running_results['batch_sizes'])
@@ -387,11 +422,11 @@ def train_whole_pipe():
                 data={'Loss_D': results['d_loss'], 'Loss_G': results['g_loss'], 'Score_D': results['d_score'],
                       'Score_G': results['g_score'], 'PSNR': results['psnr'], 'SSIM': results['ssim']},
                 index=range(1, epoch + 1))
-            if DATA_AUG:
-                data_frame.to_csv(out_path + 'srf_' + str(UPSCALE_FACTOR) + '_dataAug_train_results.csv', index_label='Epoch')
-            else:
-                data_frame.to_csv(out_path + 'srf_' + str(UPSCALE_FACTOR) + '_train_results.csv', index_label='Epoch')
+            data_frame.to_csv(out_path + 'srf_' + str(UPSCALE_FACTOR) + '_'+str(classifier.name)+'_train_results.csv', index_label='Epoch')
 
 
 if __name__ == "__main__":
-    train_half_pipe()
+    if WHOLE_PIPE:
+        train_whole_pipe()
+    else:
+        train_half_pipe()

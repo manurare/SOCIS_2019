@@ -61,16 +61,19 @@ for count, filename in enumerate(sorted(os.listdir(SET_PATH))):
     if is_image_file(filename):
         image_filenames.append(os.path.join(SET_PATH, filename))
 images = []
+image_names = []
 for idx, img_file in enumerate(image_filenames):
     img = cv2.imread(img_file)
     img = cv2.resize(img, dsize=(128, 128))
     images.append(img)
+    image_names.append(img_file)
 
 
 aug_images = augmentation.augment_images(images)
 
-for idx, aug_img in enumerate(aug_images):
-    output_name = os.path.join(OUTPUT_PATH, '%04d.jpg' % idx)
+for aug_img, img_name in zip(aug_images, image_names):
+    name = str(img_name.split(".")[0].split("/")[-1])+"_data_aug.jpg"
+    output_name = os.path.join(OUTPUT_PATH, name)
     cv2.imwrite(output_name, aug_img)
 
 

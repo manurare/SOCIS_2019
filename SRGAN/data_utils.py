@@ -6,6 +6,7 @@ from PIL import Image
 from torchvision import datasets
 from torch.utils.data.dataset import Dataset
 from torchvision.transforms import Compose, RandomCrop, ToTensor, ToPILImage, CenterCrop, Resize
+from random import shuffle
 
 
 def is_image_file(filename):
@@ -139,6 +140,7 @@ class TrainDatasetFromFolder(Dataset):
     def __init__(self, dataset_dir, hr_size, upscale_factor):
         super(TrainDatasetFromFolder, self).__init__()
         self.image_filenames = [join(dataset_dir, x) for x in listdir(dataset_dir) if is_image_file(x)]
+        shuffle(self.image_filenames)
         self.hr_transform = train_hr_transform(hr_size)
         self.lr_transform = train_lr_transform(hr_size, upscale_factor)
 

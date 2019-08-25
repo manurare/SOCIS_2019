@@ -25,7 +25,7 @@ parser.add_argument('--test_mode', default='GPU', type=str, choices=['GPU', 'CPU
 parser.add_argument('--image_name', type=str, help='test low resolution image name')
 parser.add_argument('--test_set_dir', type=str, help='test set directory')
 parser.add_argument('--whole_pipe', default=False, action='store_true')
-parser.add_argument('--model_name', default='netG_epoch_2_100.pth', type=str, help='generator model epoch name')
+parser.add_argument('--model_name', default='netG_epoch_4_050.pth', type=str, help='generator model epoch name')
 opt = parser.parse_args()
 
 #/home/manuelrey/ESA/Dataset/Step1-PresenceWhale/Whale/a_61.jpg
@@ -42,16 +42,18 @@ WHOLE_PIPE = opt.whole_pipe
 print(torch.cuda.current_device())
 print(torch.cuda.get_device_name(0))
 model = Generator(UPSCALE_FACTOR).eval()
+name_classifier = 'resnet18'
 if TEST_MODE:
     model.cuda()
     if WHOLE_PIPE:
-        model.load_state_dict(torch.load('epochs/weights_2_wholePipe/' + MODEL_NAME))
+        model.load_state_dict(torch.load('epochs/weights_wholePipe/' + "weights_" +
+                                         str(UPSCALE_FACTOR) + "_" + name_classifier + "_wholePipe/" + MODEL_NAME))
     else:
         model.load_state_dict(torch.load('epochs/weights_halfPipe/weights_'+str(UPSCALE_FACTOR)+"_dataAug/"
                                          + MODEL_NAME))
 else:
     if WHOLE_PIPE:
-        model.load_state_dict(torch.load('epochs/weights_2_wholePipe/' + MODEL_NAME
+        model.load_state_dict(torch.load('epochs/weights_wholePipe/'+"weights_"+str(UPSCALE_FACTOR)+"_wholePipe/" + MODEL_NAME
                                          , map_location=lambda storage, loc: storage))
     else:
         model.load_state_dict(torch.load('epochs/weights_halfPipe/weights_'+str(UPSCALE_FACTOR)+"_dataAug/"
@@ -60,7 +62,7 @@ else:
 
 if TEST_DIR is not None and IMAGE_NAME is None:
     if WHOLE_PIPE:
-        out_folder = 'tested_images_whole_pipe_'+str(UPSCALE_FACTOR)+os.sep
+        out_folder = 'tested_images_wholePipe_'+str(UPSCALE_FACTOR)+os.sep
     else:
         out_folder = 'tested_images_'+str(UPSCALE_FACTOR)+os.sep
     if not os.path.exists(out_folder):
