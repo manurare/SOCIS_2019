@@ -35,9 +35,12 @@ opt = parser.parse_args()
 UPSCALE_FACTOR = opt.upscale_factor
 TEST_MODE = True if opt.test_mode == 'GPU' else False
 IMAGE_NAME = opt.image_name
-MODEL_NAME = opt.model_name
 TEST_DIR = opt.test_set_dir
 WHOLE_PIPE = opt.whole_pipe
+if not WHOLE_PIPE:
+    MODEL_NAME = 'netG_dataAug_epoch_' + str(UPSCALE_FACTOR) + '_050.pth'
+else:
+    MODEL_NAME = 'netG_epoch_' + str(UPSCALE_FACTOR) + '_050.pth'
 
 print(torch.cuda.current_device())
 print(torch.cuda.get_device_name(0))
@@ -93,6 +96,8 @@ if TEST_DIR is not None and IMAGE_NAME is None:
 elif TEST_DIR is None and IMAGE_NAME is not None:
     image = Image.open(IMAGE_NAME)
     image = image.convert("RGB")
+    image = Resize(size=(161, 161), interpolation=Image.BICUBIC)(image)
+    original_upscaled = Resize(size=(161*UPSCALE_FACTOR, 161*UPSCALE_FACTOR), interpolation=Image.BICUBIC)(image)
     image = Variable(ToTensor()(image), volatile=True).unsqueeze(0)
     if TEST_MODE:
         image = image.cuda()
@@ -102,7 +107,7 @@ elif TEST_DIR is None and IMAGE_NAME is not None:
     elapsed = (time.clock() - start)
     print('cost' + str(elapsed) + 's')
     out_img = ToPILImage()(out[0].data.cpu())
-    out_img.save('out_srf_' + str(UPSCALE_FACTOR) + '_' + IMAGE_NAME.split(".")[0]+'.jpg')
+    out_img.save('out_srf_' + str(UPSCALE_FACTOR) + '_wholePipe_'+ str(WHOLE_PIPE)+'.jpg')
 else:
     print("TEST SET OR INDIVIDUAL IMAGE NOT BOTH")
     sys.exit()

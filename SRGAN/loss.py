@@ -16,7 +16,7 @@ class GeneratorLoss(nn.Module):
 
 ####change loss to add the contribution from the classifier or object detector
 
-    def forward(self, out_labels, out_images, target_images, class_det_loss):
+    def forward(self, out_labels, out_images, target_images, class_det_loss, lambda_class):
         # Adversarial Loss
         adversarial_loss = torch.mean(1 - out_labels)
         # Perception Loss
@@ -26,7 +26,8 @@ class GeneratorLoss(nn.Module):
         # TV Loss
         tv_loss = self.tv_loss(out_images)
 
-        return image_loss + 0.001 * adversarial_loss + 0.006 * perception_loss + 2e-8 * tv_loss + 0.001*class_det_loss
+        return image_loss + 0.001 * adversarial_loss + 0.006 * perception_loss + 2e-8 * tv_loss + \
+               lambda_class*class_det_loss
 
 
 class TVLoss(nn.Module):

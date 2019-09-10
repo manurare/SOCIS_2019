@@ -50,8 +50,8 @@ class DataSet(object):
 
     # Don't use tf.image.decode_image, or the output shape will be undefined
     image = tf.image.decode_png(image_string, channels=3)
-    hr_image = tf.image.resize_images(image, [256, 256])
-    lr_image = tf.image.resize_images(image, [128, 128])
+    hr_image = tf.image.resize_images(image, [32, 32])
+    lr_image = tf.image.resize_images(image, [8, 8])
     hr_image = tf.cast(hr_image, tf.float32)
     lr_image = tf.cast(lr_image, tf.float32)
     return hr_image, lr_image
@@ -59,8 +59,8 @@ class DataSet(object):
   def resize_hr_lr_test(self, filename):
     image_string = tf.read_file(filename)
     image = tf.image.decode_png(image_string, channels=3)
-    hr_image = tf.image.resize_images(image, [256, 256])
-    lr_image = tf.image.resize_images(image, [128, 128])
+    hr_image = tf.image.resize_images(image, [32, 32])
+    lr_image = tf.image.resize_images(image, [8, 8])
     hr_image = tf.cast(hr_image, tf.float32)
     lr_image = tf.cast(lr_image, tf.float32)
     return hr_image, lr_image

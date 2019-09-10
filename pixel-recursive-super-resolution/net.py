@@ -46,7 +46,7 @@ class Net(object):
     Returns:
       conditioning_logits: [batch_size, hr_height, hr_width, 3*256]
     """
-    num_deconv = np.log2(size_hr_lr[0])-np.log2(size_hr_lr[1])
+    num_deconv = np.log2(size_hr_lr[0]/size_hr_lr[1])
     if num_deconv < 0:
       print("ERROR: Invalid hr or lr image sizes ", file=sys.stderr)
       sys.exit()

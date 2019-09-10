@@ -257,7 +257,6 @@ class ImageFolderWithPaths_val(datasets.ImageFolder):
         lr_scale = Resize(size=(self.hr_size // self.upscale_factor, self.hr_size // self.upscale_factor)
                           , interpolation=Image.BICUBIC)
         hr_scale = Resize(size=(self.hr_size, self.hr_size), interpolation=Image.BICUBIC)
-        hr_image = hr_scale(hr_image)
         lr_image = lr_scale(lr_image)
         hr_restore_img = hr_scale(lr_image)
         return ToTensor()(lr_image), ToTensor()(hr_restore_img), ToTensor()(hr_image)

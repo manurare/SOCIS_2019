@@ -5,6 +5,8 @@ from tensorflow.contrib.framework.python.framework import checkpoint_utils
 from data import DataSet
 from net import Net
 import sys
+import time
+
 
 flags = tf.app.flags
 flags.DEFINE_integer("batch_size", 1, "batch_size")
@@ -16,7 +18,7 @@ config = tf.ConfigProto(allow_soft_placement=True)
 config.gpu_options.allow_growth = False
 sess = tf.Session(config=config)
 
-test_set = DataSet('data/test_whale.txt', 1, mode='test')
+test_set = DataSet('data/train_whale.txt', 1, mode='test')
 hr_images = test_set.get_sample[0]
 lr_images = test_set.get_sample[1]
 
@@ -28,7 +30,7 @@ saver = tf.train.Saver()
 
 # new_saver = tf.train.import_meta_graph('models/final.ckpt-19.meta')
 # saver.restore(sess, 'models/final.ckpt-19')
-saver.restore(sess, 'models/final_256_128.ckpt-49')
+saver.restore(sess, 'models/final_32_8.ckpt-19')
 
 all_vars_new = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
 # init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
@@ -62,10 +64,13 @@ while True:
             print(i)
             for j in range(hr_size):
                 for c in range(3):
+                    t1 = time.time()
                     np_p_logits = sess.run(p_logits, feed_dict={hr_imgs: gen_hr_imgs})
                     new_pixel = logits_2_pixel_value(
                         np_c_logits[:, i, j, c * 256:(c + 1) * 256] + np_p_logits[:, i, j, c * 256:(c + 1) * 256], mu=mu)
                     gen_hr_imgs[:, i, j, c] = new_pixel
+                    t2 = time.time()
+                    print("Time per pixel = %f" % (t2-t1))
 
         name_to_save = str(it)+'_'+str(hr_images.shape[1])+'_'+str(lr_images.shape[1])+'.jpg'
         save_samples(np_lr_imgs, conf.samples_dir + '/lr_' + name_to_save)

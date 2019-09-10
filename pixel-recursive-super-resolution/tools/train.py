@@ -13,7 +13,7 @@ flags.DEFINE_string("imgs_list_path", "data/train_whale.txt", "images list file 
 flags.DEFINE_boolean("use_gpu", True, "whether to use gpu for training")
 flags.DEFINE_integer("device_id", 1, "gpu device id")
 
-flags.DEFINE_integer("num_epoch", 50, "train epoch num")
+flags.DEFINE_integer("num_epoch", 20, "train epoch num")
 flags.DEFINE_integer("batch_size", 1, "batch_size")
 
 flags.DEFINE_float("learning_rate", 4e-4, "learning rate")
