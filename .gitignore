@@ -4,6 +4,5 @@ LearningToCompare_FSL/*
 *.csv
 *.tif
 *.tiff
-*.rds
 rshiny_app/.idea/*
 script_datacube/.idea/*
