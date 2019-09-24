@@ -47,19 +47,40 @@ mask_whales = np.ma.filled(mask_whales, fill_value=0.0)
 
 band_mefts = mefts.GetRasterBand(1)
 barray_mefts = band_mefts.ReadAsArray()
-final_band = barray_mefts * mask_whales
+mefts_plus_whale = barray_mefts * mask_whales
 
-csv_list = []
-for posX, posY in zip(check[0], check[1]):
+print(barray_mefts.min())
+print(barray_mefts.max())
+right_value_mefts = np.where(barray_mefts >= 0)
+
+csv_mefts_plus_whales = []
+csv_whales = []
+for posY, posX in zip(check[0], check[1]):
     long, lat = get_lat_long(posX, posY, whale_presence)
-    # print(final_band[posX][posY])
-    csv_list.append([final_band[posX][posY], long, lat])
+    # print(mefts_plus_whale[posX][posY])
+    csv_mefts_plus_whales.append([mefts_plus_whale[posY][posX], long, lat])
+    csv_whales.append([barray_whales[posY][posX], long, lat])
 
-with open('correlation.csv', 'w', newline='') as myfile:
+csv_mefts = []
+for posY in np.arange(0, barray_mefts.shape[0], 100):
+    for posX in np.arange(0, barray_mefts.shape[1], 100):
+        long, lat = get_lat_long(posX, posY, mefts)
+        csv_mefts.append([barray_mefts[posY][posX], long, lat])
+
+with open('mefts_and_whales.csv', 'w', newline='') as myfile:
     wr = csv.writer(myfile)
-    wr.writerows(csv_list)
+    wr.writerow(['value','long','lat'])
+    wr.writerows(csv_mefts_plus_whales)
 
+with open('whales.csv', 'w', newline='') as myfile:
+    wr = csv.writer(myfile)
+    wr.writerow(['value','long','lat'])
+    wr.writerows(csv_whales)
 
+with open('mefts.csv', 'w', newline='') as myfile:
+    wr = csv.writer(myfile)
+    wr.writerow(['value','long','lat'])
+    wr.writerows(csv_mefts)
 
 
 

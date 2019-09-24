@@ -2,7 +2,11 @@
 # Objective : TODO
 # Created by: manuel
 # Created on: 26/7/19
-df = read.csv("correlation.csv", stringsAsFactors = F)
+# inputFile = list.files(pattern="../../rshiny_testFiles/*.csv")
+name <- "whales_reduced"
+path_to_load <- paste("../../rshiny_testFiles/",name,".csv", sep="")
+path_to_save <- paste("../../rshiny_testFiles/",name,".rds", sep="")
+df = read.csv(path_to_load, stringsAsFactors = F)
 df <- tidyr::separate(data=df,
                       col=value,
                       into="val",
@@ -26,6 +30,6 @@ df$long <- as.numeric(df$long)
 scalar1 <- function(x) {9*((x-min(x))/max(x)-min(x))+1}
 df$val = scalar1(df$val)
 
-saveRDS(df, "./correlation.rds")
+saveRDS(df, path_to_save)
 # sample_data <- df[c(1:1000),]
 # saveRDS(sample_data, "./correlation.rds")
