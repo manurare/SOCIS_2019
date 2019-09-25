@@ -63,5 +63,5 @@ In this [link](https://www-iuem.univ-brest.fr/datacube/sample-apps/rshiny_app/) 
 ### Visual result Super-resolution 
 On the top image it is depicted the raw satellite dataset while in the bottom one the step of resolution is considered.
 <div align="center">
-  <img src="result_images/zoomed_result.jpg" width="500" height="300">
+  <img src="result_images/zoomed_result.jpg" width="500" height="500">
 </div>
