@@ -16,8 +16,8 @@ The satellite dataset consists on seven classes: clouds, dynamic ship, rocks, st
 The SR dataset consists of high resolution with high frequency information. This is key when training super resolution models as they need to downsample the HR image to get the LR and then learn the mapping to recover high frequencies. This training is not possible with satellite images as there is not high frequency information on them.
 
 <div align="center">
-  <img src="result_images/sr_1.png" width="350" height="300">
-  <img src="result_images/sr_2.png" width="350" height="300">
+  <img src="result_images/sr_1.jpg" width="350" height="300">
+  <img src="result_images/sr_2.jpg" width="350" height="300">
 </div>
 
 
