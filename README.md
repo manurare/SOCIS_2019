@@ -6,7 +6,7 @@ This project lies on the complexity of detecting whales in satelite images. In p
 
 <div align="center">
   <img src="result_images/map_noGrid.png" width="350" height="300">
-   <img src="result_images/grid.png" width="350" height="300">
+  <img src="result_images/grid.png" width="350" height="300">
 </div>
 * Due to the lack of spatial resolution in satellite images a superresolution step is required to increased high frequencies and restore fine details. SRGAN and Pixel Recursive Super Resolution were tested. This step will ease the performance of different object detection algorithms.
 * Implement a new loss on the generator to generate not only SR images but images belonging to specific classes in which inherent features are enhanced to ease the classification task.
