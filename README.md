@@ -6,7 +6,7 @@ In this project we have used two datasets: a **satellite image dataset** with lo
 
 The satellite dataset consists on seven classes: clouds, dynamic ship, rocks, static ship, ship, water and whale. The dataset is unbalanced since whales is a species in danger of extinction and there are not many specimens. What is even harder is finding them on the ocean surface. 
 <div align="center">
-  <img src="result_images/sat_dat.png" width="800" height="200">
+  <img src="result_images/sat_dat.png" width="800" height="160">
 </div>
 
 <div align="center">
@@ -14,6 +14,11 @@ The satellite dataset consists on seven classes: clouds, dynamic ship, rocks, st
 </div>
 
 The SR dataset consists of high resolution with high frequency information. This is key when training super resolution models as they need to downsample the HR image to get the LR and then learn the mapping to recover high frequencies. This training is not possible with satellite images as there is not high frequency information on them.
+
+<div align="center">
+  <img src="result_images/sr_1.png" width="350" height="300">
+  <img src="result_images/sr_2.png" width="350" height="300">
+</div>
 
 
 ## Steps
