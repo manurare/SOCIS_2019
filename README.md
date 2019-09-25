@@ -61,7 +61,7 @@ In this [link](https://www-iuem.univ-brest.fr/datacube/sample-apps/rshiny_app/) 
 | SRGAN x2 + ResNet-50, &#955;=0.001 | **0.874** | **148.354** |
 
 ### Visual result Super-resolution 
-On the top image it is depicted the raw satellite dataset while in the bottom one the step of resolution is considered.
+On the top image it is depicted the raw satellite image whereas in the bottom our super resolution method is considered.
 <div align="center">
   <img src="result_images/zoomed_result.jpg" width="500" height="500">
 </div>
