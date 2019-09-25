@@ -1,6 +1,19 @@
 # SOCIS_2019
 This project lies on the complexity of detecting whales in satelite images. In particular, only the Mediterranean Sea is considered. 
 
+## Dataset 
+In this project we have used two datasets: a satellite image dataset with images acquired from Google and Bing Maps and labelled by ourselves, and a super-resolution dataset to train the SRGAN to learn a correct mapping from LR to HR. 
+
+The satellite dataset consists on seven classes: clouds, dynamic ship, rocks, static ship, ship, water and whale. The dataset is unbalanced since whales is a species in danger of extinction and there are not many specimens. What is even harder is finding them on the ocean surface. 
+<div align="center">
+  <img src="result_images/sat_dat.png" width="800" height="200">
+</div>
+
+<div align="center">
+  <img src="result_images/proportions.png" width="300" height="200">
+</div>
+
+
 ## Steps
 * Image gathering from the first 3km margin from the coast into the ocean coming from Google Maps and Bing Maps. The former uses the GCP framework and the static maps API. Then with the unique key assigned for the use of the API many requests can be made with the exact bounding box coordinates (latitud and longitude of the top left corner and bottom right corner) to extract the image. The latter uses the code in [this repository](https://github.com/manurare/Satellite-Aerial-Image-Retrieval.git) to read a .csv file where each line indicates the coordinates of a particular bounding box to get the current image.
 
