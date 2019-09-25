@@ -3,14 +3,14 @@ This project lies on the complexity of detecting whales in satelite images. In p
 
 ## Steps
 * Image gathering from the first 3km margin from the coast into the ocean coming from Google Maps and Bing Maps. The former uses the GCP framework and the static maps API. Then with the unique key assigned for the use of the API many requests can be made with the exact bounding box coordinates (latitud and longitude of the top left corner and bottom right corner) to extract the image. The latter uses the code in [this repository](https://github.com/manurare/Satellite-Aerial-Image-Retrieval.git) to read a .csv file where each line indicates the coordinates of a particular bounding box to get the current image.
+
 <div align="left">
   <img src="result_images/map_noGrid.png" width="350" height="300">
-</div>
-<div align="right">
-  <img src="result_images/grid.png" width="350" height="300">
+   <img src="result_images/grid.png" width="350" height="300">
 </div>
 * Due to the lack of spatial resolution in satellite images a superresolution step is required to increased high frequencies and restore fine details. SRGAN and Pixel Recursive Super Resolution were tested. This step will ease the performance of different object detection algorithms.
 * Implement a new loss on the generator to generate not only SR images but images belonging to specific classes in which inherent features are enhanced to ease the classification task.
+
 <div align="center">
   <img src="result_images/new_loss.png" width="500" height="300">
 </div>
