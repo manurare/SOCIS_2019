@@ -36,7 +36,8 @@ The SR dataset consists of high resolution with high frequency information. This
 <div align="center">
   <img src="result_images/new_loss.png" width="500" height="300">
 </div>
-* Check via image classification whether the modified generator was succesfull into reducing false positives. 
+
+* Assess via image classification whether the modified generator was succesfull into reducing false positives. 
 
 ## Results
 In this [link](https://www-iuem.univ-brest.fr/datacube/sample-apps/rshiny_app/) you can check an interactive map where different raster data layers can be uploaded (rds files) and modified to be overlapped, combined and weighted among them with higher and lower intensity to evaluate visually different aspects from satellite data. **Test rds files can be found in SOCIS_2019/rshiny_app/rds_files**
