@@ -43,6 +43,10 @@ The SR dataset consists of images with high resolution and high frequency inform
 ## Results
 In this [link](https://www-iuem.univ-brest.fr/datacube/sample-apps/rshiny_app/) you can check an interactive map where different raster data layers can be uploaded (rds files) and modified to be overlapped, combined and weighted among them with higher and lower intensity to evaluate visually different aspects from satellite data. **Test rds files can be found in SOCIS_2019/rshiny_app/rds_files**
 
+- _whales_reduced.rds_ file shows information about whales around the globe. Each dot represents one whale. They have been reduced as there were 10k points where data was available making the server unable to render such data. Therefore, we have only considered 2k samples.
+- _mefts.rds_ depicts marine ecosystem functional types. This data range is [1,64] where each value represents a different type. The way it is represented is that higher types are plot with higher diameter dots and viceversa.
+- _mefts_and_whales.rds_ is the combination of whale presence
+textit
 ### Metric Results for ResNet-18
 |Dataset|Accuracy|Whale Score|
 | --- | --- | --- |
