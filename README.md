@@ -45,8 +45,8 @@ In this [link](https://www-iuem.univ-brest.fr/datacube/sample-apps/rshiny_app/) 
 
 - _whales_reduced.rds_ file shows information about whales around the globe. Each dot represents one whale. They have been reduced as there were 10k points where data was available making the server unable to render such data. Therefore, we have only considered 2k samples.
 - _mefts.rds_ depicts marine ecosystem functional types. This data range is [1,64] where each value represents a different type. The way it is represented is that higher types are plot with higher diameter dots and viceversa.
-- _mefts_and_whales.rds_ is the combination of whale presence
-textit
+- _mefts_and_whales.rds_ is the combination of whale presence with the mefts by doing a multiplication in the coordinates where it concides to be both data.
+
 ### Metric Results for ResNet-18
 |Dataset|Accuracy|Whale Score|
 | --- | --- | --- |
