@@ -38,7 +38,7 @@ The SR dataset consists of images with high resolution and high frequency inform
   <img src="result_images/train_flow.png" width="550" height="280">
 </div>
 
-* With the new generator configurations (variations of &#955) new versions from the satellite dataset are created to eventually train ResNet-18/50 on them and test their performance with respect to the native satellite dataset. Thus, with the results obtained with the classifiers on the different datasets we check whether the modified generator was succesfull into reducing false positives. 
+* With the new generator configurations (variations of &#955;) new versions from the satellite dataset are created to eventually train ResNet-18/50 on them and test their performance with respect to the native satellite dataset. Thus, with the results obtained with the classifiers on the different datasets we check whether the modified generator was succesfull into reducing false positives. 
 
 ## Results
 In this [link](https://www-iuem.univ-brest.fr/datacube/sample-apps/rshiny_app/) you can check an interactive map where different raster data layers can be uploaded (rds files) and modified to be overlapped, combined and weighted among them with higher and lower intensity to evaluate visually different aspects from satellite data. **Test rds files can be found in SOCIS_2019/rshiny_app/rds_files**
