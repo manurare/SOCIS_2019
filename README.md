@@ -35,6 +35,7 @@ The SR dataset consists of images with high resolution and high frequency inform
 
 <div align="center">
   <img src="result_images/new_loss.png" width="500" height="300">
+  <img src="result_images/train_flow.png" width="500" height="300">
 </div>
 
 * With the new generator configurations (variations of &#955) new versions from the satellite dataset are created to eventually train ResNet-18/50 on them and test their performance with respect to the native satellite dataset. Thus, with the results obtained with the classifiers on the different datasets we check whether the modified generator was succesfull into reducing false positives. 
