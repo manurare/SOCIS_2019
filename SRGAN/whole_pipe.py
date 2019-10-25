@@ -70,7 +70,7 @@ print(classifier_name)
 print(UPSCALE_FACTOR)
 
 if GEN_DATASET:
-    data_dir = '../../Dataset/split_dataset/'
+    data_dir = '../data/split_dataset/'
     image_datasets = {x: ImageFolderWithPaths(os.path.join(data_dir, x), data_transforms[x])
                       for x in ['train', 'test']}
     dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=1, shuffle=True, num_workers=4)
@@ -98,11 +98,11 @@ if GEN_DATASET:
 
     for name_dataloader in dataloaders:
         if WHOLE_PIPE and LAMBDA_CLASS == -1.0:
-            path = '../../Dataset/split_dataset_wholePipe_'+str(UPSCALE_FACTOR)+'_'+classifier_name+os.sep
+            path = '../data/split_dataset_wholePipe_'+str(UPSCALE_FACTOR)+'_'+classifier_name+os.sep
         if not WHOLE_PIPE:
-            path = '../../Dataset/split_dataset_SRGAN_'+str(UPSCALE_FACTOR)+os.sep
+            path = '../data/split_dataset_SRGAN_'+str(UPSCALE_FACTOR)+os.sep
         if WHOLE_PIPE and LAMBDA_CLASS != -1.0:
-            path = '../../Dataset/split_dataset_wholePipe_' + str(UPSCALE_FACTOR) + '_' + classifier_name + \
+            path = '../data/split_dataset_wholePipe_' + str(UPSCALE_FACTOR) + '_' + classifier_name + \
                    '_lambda' + str(LAMBDA_CLASS) + os.sep
 
         if not os.path.exists(path):
@@ -121,8 +121,8 @@ if GEN_DATASET:
             print("saved--------------->"+name)
 
 else:
-    data_dir = '../../Dataset/split_dataset/'
-    out_folder = '../../Dataset/split_dataset_BICUBIC_'+str(UPSCALE_FACTOR)+os.sep
+    data_dir = '../data/split_dataset/'
+    out_folder = '../data/split_dataset_BICUBIC_'+str(UPSCALE_FACTOR)+os.sep
     for dp, dn, filenames in os.walk(data_dir):
         if len(filenames) != 0:
             for file in filenames:

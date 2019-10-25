@@ -48,12 +48,12 @@ print(torch.cuda.get_device_name(0))
 
 def train_half_pipe():
     if DATA_AUG:
-        train_set = TrainDatasetFromFolder('/home/mrey/ESA/Dataset/Step2-SuperresolutionWhale/split_SRdataset/train'
+        train_set = TrainDatasetFromFolder('../data/split_SRdataset/train'
                                            ,hr_size=HR_SIZE, upscale_factor=UPSCALE_FACTOR)
     else:
         train_set = TrainDatasetFromFolder('/home/mrey/ESA/Dataset/Step2-SuperresolutionWhale/converted_jpg',
                                            hr_size=HR_SIZE, upscale_factor=UPSCALE_FACTOR)
-    val_set = ValDatasetFromFolder('/home/mrey/ESA/Dataset/Step2-SuperresolutionWhale/split_SRdataset/test',
+    val_set = ValDatasetFromFolder('../data/split_SRdataset/test',
                                    hr_size=HR_SIZE, upscale_factor=UPSCALE_FACTOR)
     train_loader = DataLoader(dataset=train_set, num_workers=4, batch_size=BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(dataset=val_set, num_workers=4, batch_size=1, shuffle=False)
@@ -226,8 +226,8 @@ def train_half_pipe():
 
 
 def train_whole_pipe():
-    data_dir_lr = '/home/mrey/ESA/Dataset/split_dataset/'
-    data_dir_hr = '/home/mrey/ESA/Dataset/split_dataset_SRGAN_'+str(UPSCALE_FACTOR)+os.sep
+    data_dir_lr = '../data/split_dataset/'
+    data_dir_hr = '../data/split_dataset_SRGAN_'+str(UPSCALE_FACTOR)+os.sep
     train_set = ImageFolderWithPaths_train(data_dir_hr+"train"+os.sep, data_dir_lr+"train", HR_SIZE, UPSCALE_FACTOR)
     val_set = ImageFolderWithPaths_val(data_dir_hr+"test"+os.sep, data_dir_lr+"test", HR_SIZE, UPSCALE_FACTOR)
 
@@ -270,7 +270,7 @@ def train_whole_pipe():
     # else:
     #     weights_class_path = "/home/mrey/ESA/pruebas/multiclass_classification/weights/best_model_SRGAN_"\
     #                          + str(UPSCALE_FACTOR)+".pth"
-    weights_class_path = "/home/mrey/ESA/pruebas/multiclass_classification/weights/"+\
+    weights_class_path = "../multiclass_classification/weights/"+\
                          classifier.name+"_best_model_kfold.pth"
     classifier.load_state_dict(torch.load(weights_class_path))
     criterion_classifier = nn.CrossEntropyLoss()
@@ -435,8 +435,8 @@ def train_whole_pipe():
 
 
 def train_lambda_class():
-    data_dir_lr = '/home/mrey/ESA/Dataset/split_dataset/'
-    data_dir_hr = '/home/mrey/ESA/Dataset/split_dataset_SRGAN_'+str(UPSCALE_FACTOR)+os.sep
+    data_dir_lr = '../data/split_dataset/'
+    data_dir_hr = '../data/split_dataset_SRGAN_'+str(UPSCALE_FACTOR)+os.sep
     train_set = ImageFolderWithPaths_train(data_dir_hr+"train"+os.sep, data_dir_lr+"train", HR_SIZE, UPSCALE_FACTOR)
     val_set = ImageFolderWithPaths_val(data_dir_hr+"test"+os.sep, data_dir_lr+"test", HR_SIZE, UPSCALE_FACTOR)
 
@@ -479,7 +479,7 @@ def train_lambda_class():
     # else:
     #     weights_class_path = "/home/mrey/ESA/pruebas/multiclass_classification/weights/best_model_SRGAN_"\
     #                          + str(UPSCALE_FACTOR)+".pth"
-    weights_class_path = "/home/mrey/ESA/pruebas/multiclass_classification/weights/"+\
+    weights_class_path = "../data/multiclass_classification/weights/"+\
                          classifier.name+"_best_model_kfold.pth"
     classifier.load_state_dict(torch.load(weights_class_path))
     criterion_classifier = nn.CrossEntropyLoss()
