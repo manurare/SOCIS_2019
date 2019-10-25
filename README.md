@@ -1,6 +1,45 @@
 # SOCIS_2019
 This project lies on the complexity of detecting whales in satelite images. In particular, only the Mediterranean Sea is considered. 
 
+## Requirements
+- PyTorch 1.1.0
+- tqdm
+- pandas
+- opencv
+
+## How to run it
+For the vainilla SRGAN (standard loss) 
+```
+cd SRGAN
+CUDA_VISIBLE_DEVICES=0 python train.py --upscale_factor [2,4] --num_epochs 30 --hr_size [322,644] --batch_size [2,4,8,...] --data_aug
+```
+Then, generate dataset with the trained generator
+```
+cd SRGAN
+CUDA_VISIBLE_DEVICES=0 python whole_pipe.py --upscale_factor [2,4] --generate_dataset 
+```
+Train ResNet-18 or 50 in the new generated dataset
+```
+cd multiclass_classification
+CUDA_VISIBLE_DEVICES=0 python kfold.py --upscale_factor [2, 4] --classifier_name [resnet18,resnet50] --batch_size [2,4,8,...] 
+```
+Fine-tune generator with the contribution of the previously trained classifier
+```
+cd SRGAN
+CUDA_VISIBLE_DEVICES=0 python train.py --upscale_factor [2,4] --whole_pipe --lambda_class --num_epochs 30 --hr_size [322,644] --batch_size [2,4,8,...] --data_aug
+```
+Generate dataset with the modified generator
+```
+cd SRGAN
+CUDA_VISIBLE_DEVICES=0 python whole_pipe.py --upscale_factor [2,4] --generate_dataset --whole_pipe --lambda_class
+```
+
+Test classifier in the different datasets
+```
+cd multiclass_classification
+CUDA_VISIBLE_DEVICES=0 python predict.py --upscale_factor [2,4] [--whole_pipe] --lambda_class [2,1,0.1,0.01,0.001] --classifier_name [resnet18,resnet50]
+```
+
 ## Dataset 
 In this project we have used two datasets: a **satellite image dataset** with low-resolution images acquired from Google and Bing Maps and labelled by ourselves, and a **super-resolution (SR) dataset** to train the SRGAN to learn a correct mapping from low-resolution (LR) to high-resolution (HR) images. 
 
